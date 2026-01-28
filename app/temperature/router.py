@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post("/temperatures/update/", response_model=list[schemas.TemperatureRead])
 async def update_temperatures(db: Session = Depends(get_db)):
-    cities = get_all_cities(db=db)
+    cities = await asyncio.to_thread(get_all_cities, db=db)
 
     if not cities:
         raise HTTPException(status_code=404, detail="No cities in database.")
@@ -32,9 +32,9 @@ def get_all_temperatures(db: Session = Depends(get_db)):
     return temperatures
 
 
-@router.get("/temperatures/{city_id}/", response_model=list[schemas.TemperatureRead])
-def get_temperatures_by_city(city_id: int, db: Session = Depends(get_db)):
-    temperatures = crud.get_temperatures_by_city(db=db, city_id=city_id)
+@router.get("/temperatures/", response_model=list[schemas.TemperatureRead])
+async def get_temperatures_by_city(city_id: int = Query(...), db: Session = Depends(get_db)):
+    temperatures = await asyncio.to_thread(crud.get_temperatures_by_city, db, city_id)
 
     if not temperatures:
         raise HTTPException(status_code=404, detail=f"No temperatures found for city_id={city_id}")

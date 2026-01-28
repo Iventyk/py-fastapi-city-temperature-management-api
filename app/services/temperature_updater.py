@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -22,5 +24,5 @@ async def fetch_and_create_temperature(db: Session, city) -> schemas.Temperature
         city_id=city.id,
     )
 
-    db_temperature = crud.create_temperature(db=db, temperature=temperature_schema)
+    db_temperature = await asyncio.to_thread(crud.create_temperature, db=db, temperature=temperature_schema)
     return db_temperature
