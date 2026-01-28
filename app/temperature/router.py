@@ -27,16 +27,13 @@ async def update_temperatures(db: Session = Depends(get_db)):
 
 
 @router.get("/temperatures/", response_model=list[schemas.TemperatureRead])
-def get_all_temperatures(db: Session = Depends(get_db)):
-    temperatures = crud.get_all_temperatures(db=db)
-    return temperatures
+async def get_temperatures(city_id: int | None = Query(default=None), db: Session = Depends(get_db)):
 
-
-@router.get("/temperatures/", response_model=list[schemas.TemperatureRead])
-async def get_temperatures_by_city(city_id: int = Query(...), db: Session = Depends(get_db)):
-    temperatures = await asyncio.to_thread(crud.get_temperatures_by_city, db, city_id)
-
-    if not temperatures:
-        raise HTTPException(status_code=404, detail=f"No temperatures found for city_id={city_id}")
+    if city_id is not None:
+        temperatures = await asyncio.to_thread(crud.get_temperatures_by_city, db, city_id)
+        if not temperatures:
+            raise HTTPException(status_code=404, detail=f"No temperatures found for city_id={city_id}")
+    else:
+        temperatures = await asyncio.to_thread(crud.get_all_temperatures, db)
 
     return temperatures
